@@ -199,6 +199,20 @@ function processWatchLater() {
 }
 
 // ==========================================================================
+// LOGIC: REMOVE ADS
+// ==========================================================================
+function removeAds() {
+    // Finds the specific ad tag and removes its parent container (the grid item)
+    const adSlots = document.querySelectorAll('ytd-ad-slot-renderer');
+    adSlots.forEach(slot => {
+        const container = slot.closest('ytd-rich-item-renderer');
+        if (container) {
+            container.remove();
+        }
+    });
+}
+
+// ==========================================================================
 // LOGIC: TEMPORARY SIDEBAR INJECTION (Forces Grid to List Reflow)
 // ==========================================================================
 let hasTriggeredLayoutFix = false;
@@ -264,6 +278,7 @@ const observer = new MutationObserver((mutations) => {
             }
         }
 
+        removeAds(); // <-- Added call to remove ads
         processSubscriptionsHeader();
         processVideoDescriptions();
         processWatchLater();
