@@ -5,7 +5,8 @@ const defaultSettings = {
     listContainerWidth: 90,
     thumbnailWidth: 260,
     titleFontSize: 13, // pt
-    metaFontSize: 10   // pt
+    metaFontSize: 10,  // pt
+    notifyWidth: 150   // px
 };
 
 // ==========================================================================
@@ -17,6 +18,7 @@ function applySettings(settings) {
     root.style.setProperty('--thumbnail-width', settings.thumbnailWidth + 'px');
     root.style.setProperty('--title-font-size', settings.titleFontSize + 'pt');
     root.style.setProperty('--meta-font-size', settings.metaFontSize + 'pt');
+    root.style.setProperty('--notify-width', settings.notifyWidth + 'px');
 }
 
 // Load settings on startup

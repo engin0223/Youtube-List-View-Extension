@@ -8,6 +8,9 @@
     --header-height: 40px;
     --channel-info-padding-bottom: 10px;
     
+    /* New Variable */
+    --notify-width: 150px;
+    
     /* Font Sizes in PT */
     --title-font-size: 13pt; 
     --meta-font-size: 10pt;
@@ -16,12 +19,6 @@
 /* ==========================================================================
    STYLES
    ========================================================================== */
-
-/* 0. REMOVE ADS (New Rule) */
-ytd-rich-item-renderer:has(ytd-ad-slot-renderer),
-ytd-ad-slot-renderer {
-    display: none !important;
-}
 
 /* 1. GRID & LAYOUT RESET (Applied to BOTH Home and Subscriptions) */
 ytd-browse[page-subtype="subscriptions"] ytd-rich-grid-renderer,
@@ -263,4 +260,12 @@ ytd-browse[page-subtype="home"] ytd-shelf-renderer,
 ytd-browse[page-subtype="home"] ytd-shelf-renderer h2 {
     margin: 0 !important;
     padding: 0 !important;
+}
+
+/* 8. DYNAMIC ATTACHMENT / NOTIFY BUTTON WIDTH */
+/* Overrides inline styles often present on these dynamic elements */
+lockup-attachments-view-model,
+.ytLockupAttachmentsViewModelHost {
+    width: var(--notify-width) !important;
+    max-width: 100% !important;
 }

@@ -3,7 +3,8 @@ const defaults = {
     listContainerWidth: 90,
     thumbnailWidth: 260,
     titleFontSize: 13, // pt
-    metaFontSize: 10   // pt
+    metaFontSize: 10,  // pt
+    notifyWidth: 150   // px
 };
 
 // Elements
@@ -15,7 +16,9 @@ const inputs = {
     titleFontSize: document.getElementById('titleFontSize'),
     titleFontSizeSlider: document.getElementById('titleFontSizeSlider'),
     metaFontSize: document.getElementById('metaFontSize'),
-    metaFontSizeSlider: document.getElementById('metaFontSizeSlider')
+    metaFontSizeSlider: document.getElementById('metaFontSizeSlider'),
+    notifyWidth: document.getElementById('notifyWidth'),
+    notifyWidthSlider: document.getElementById('notifyWidthSlider')
 };
 
 // Helper: Get current values from DOM
@@ -24,7 +27,8 @@ function getCurrentSettings() {
         listContainerWidth: inputs.listContainerWidth.value,
         thumbnailWidth: inputs.thumbnailWidth.value,
         titleFontSize: inputs.titleFontSize.value,
-        metaFontSize: inputs.metaFontSize.value
+        metaFontSize: inputs.metaFontSize.value,
+        notifyWidth: inputs.notifyWidth.value
     };
 }
 
@@ -46,6 +50,8 @@ function saveToStorage() {
 
 // Setup Event Listeners with Validation (Clipping)
 function setupControl(textInput, sliderInput) {
+    if (!textInput || !sliderInput) return;
+
     // 1. Slider Move -> Update Text & Live Preview
     sliderInput.addEventListener('input', () => {
         textInput.value = sliderInput.value;
@@ -94,6 +100,7 @@ setupControl(inputs.listContainerWidth, inputs.listContainerWidthSlider);
 setupControl(inputs.thumbnailWidth, inputs.thumbnailWidthSlider);
 setupControl(inputs.titleFontSize, inputs.titleFontSizeSlider);
 setupControl(inputs.metaFontSize, inputs.metaFontSizeSlider);
+setupControl(inputs.notifyWidth, inputs.notifyWidthSlider);
 
 // Load saved settings
 document.addEventListener('DOMContentLoaded', () => {
