@@ -103,21 +103,42 @@ function processVideoDescriptions() {
     const items = document.querySelectorAll('ytd-rich-item-renderer');
 
     items.forEach(item => {
-        // Skip if already processed or currently fetching
-        if (item.dataset.descAdded === 'true' || item.dataset.descFetching === 'true') return;
-
         const linkEl = item.querySelector('a#video-title-link') || item.querySelector('a.yt-lockup-metadata-view-model__title');
         if (!linkEl) return;
+
+        const currentUrl = linkEl.href;
+
+        // CHECK: If we already fetched for THIS specific URL, skip.
+        // If the element is reused (recycled) for a different video, the URLs won't match, and we will update.
+        if (item.dataset.processedUrl === currentUrl) {
+            return;
+        }
+
+        // If reusing an item that has an old description, clean it up
+        if (item.dataset.processedUrl && item.dataset.processedUrl !== currentUrl) {
+            const oldDesc = item.querySelector('.custom-description');
+            if (oldDesc) oldDesc.remove();
+            item.dataset.descFetching = 'false'; // Reset fetching lock
+        }
+
+        // Prevent double-fetching for the same URL
+        if (item.dataset.descFetching === 'true') return;
 
         const metadataContainer = item.querySelector('yt-content-metadata-view-model');
         if (!metadataContainer) return;
 
         item.dataset.descFetching = 'true';
-        const url = linkEl.href;
-
-        fetch(url)
+        
+        fetch(currentUrl)
             .then(response => response.text())
             .then(html => {
+                // Double check that the item hasn't been recycled AGAIN while we were fetching
+                const freshLink = item.querySelector('a#video-title-link') || item.querySelector('a.yt-lockup-metadata-view-model__title');
+                if (freshLink && freshLink.href !== currentUrl) {
+                     item.dataset.descFetching = 'false';
+                     return;
+                }
+
                 const match = html.match(/<meta name="description" content="([^"]*)"/);
 
                 if (match && match[1]) {
@@ -129,11 +150,12 @@ function processVideoDescriptions() {
                         metadataContainer.appendChild(descDiv);
                     }
                 }
-                item.dataset.descAdded = 'true';
+                // Mark as successfully processed for THIS url
+                item.dataset.processedUrl = currentUrl;
             })
             .catch(err => {
-                // Prevent infinite retries on failure
-                item.dataset.descAdded = 'true';
+                // On error, reset so we might try again later
+                item.dataset.descFetching = 'false';
             });
     });
 }
@@ -146,10 +168,10 @@ function processWatchLater() {
     const existingBtn = document.querySelector('a[href="/playlist?list=WL"]');
     if (existingBtn) return;
 
-    // 2. Find a sibling to insert after (Playlists or History) to ensure correct position
+    // 2. Find a sibling to insert after (Playlists or History)
     const playlistsLink = document.querySelector('a[href="/feed/playlists"]');
     const historyLink = document.querySelector('a[href="/feed/history"]');
-    
+
     // Determine the reference node (we want to insert AFTER this node)
     let referenceNode = null;
     if (playlistsLink) {
@@ -158,7 +180,7 @@ function processWatchLater() {
         referenceNode = historyLink.closest('ytd-guide-entry-renderer');
     }
 
-    // 3. Insert the button if we found a place for it
+    // 3. Insert the button
     if (referenceNode && referenceNode.parentElement) {
         const container = referenceNode.parentElement;
         
@@ -253,10 +275,12 @@ function injectTemporaryPanel() {
 }
 
 // ==========================================================================
-// MAIN OBSERVER
+// MAIN OBSERVER & NAVIGATION LISTENERS
 // ==========================================================================
+
+// 1. WATCH FOR DOM CHANGES (Infinite Scroll / Initial Load)
 const observer = new MutationObserver((mutations) => {
-    // Reset layout fix trigger on URL change
+    // Reset layout fix trigger on URL change (Fallback)
     if (window.location.href !== lastUrl) {
         lastUrl = window.location.href;
         hasTriggeredLayoutFix = false;
@@ -280,7 +304,7 @@ const observer = new MutationObserver((mutations) => {
             }
         }
 
-        removeAds(); // <-- Added call to remove ads
+        removeAds();
         processSubscriptionsHeader();
         processVideoDescriptions();
         processWatchLater();
@@ -293,3 +317,19 @@ const observer = new MutationObserver((mutations) => {
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
+
+// 2. WATCH FOR PAGE NAVIGATION (Home <-> Subscriptions transition)
+document.addEventListener('yt-navigate-finish', () => {
+    // Force update internal state
+    lastUrl = window.location.href;
+    hasTriggeredLayoutFix = false;
+    
+    // Immediately trigger processing if on target page
+    if (isTargetPage()) {
+        removeAds();
+        processSubscriptionsHeader();
+        processVideoDescriptions();
+        processWatchLater();
+        // The observer will likely catch the rest, but this ensures we don't miss the event
+    }
+});
