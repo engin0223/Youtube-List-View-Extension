@@ -116,8 +116,7 @@ function processVideoDescriptions() {
 
         // If reusing an item that has an old description, clean it up
         if (item.dataset.processedUrl && item.dataset.processedUrl !== currentUrl) {
-            const oldDesc = item.querySelector('.custom-description');
-            if (oldDesc) oldDesc.remove();
+            item.querySelectorAll('.custom-description').forEach(el => el.remove());
             item.dataset.descFetching = 'false'; // Reset fetching lock
         }
 
@@ -144,6 +143,11 @@ function processVideoDescriptions() {
                 if (match && match[1]) {
                     const rawDesc = match[1];
                     if (rawDesc && rawDesc !== 'null') {
+                        // FIX: Remove ANY existing descriptions before appending a new one.
+                        // This prevents duplicates if multiple fetches finish for the same item.
+                        const existingDescriptions = metadataContainer.querySelectorAll('.custom-description');
+                        existingDescriptions.forEach(el => el.remove());
+
                         const descDiv = document.createElement('div');
                         descDiv.className = 'custom-description';
                         descDiv.textContent = decodeHtmlEntities(rawDesc);
