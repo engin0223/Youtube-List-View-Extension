@@ -222,19 +222,82 @@ ytd-browse[page-subtype="home"] yt-content-metadata-view-model .yt-content-metad
 }
 
 /* 6. DESCRIPTION STYLES */
+.custom-description-container {
+    width: 100%;
+    margin-top: 6px;
+    box-sizing: border-box;
+    
+    /* CRITICAL: Set to static so the button positions relative to the main card */
+    position: static !important; 
+    
+    /* Add padding to ensure text doesn't flow immediately under the button initially */
+    padding-bottom: 0; 
+}
+
 .custom-description {
     display: -webkit-box;
     -webkit-line-clamp: 3;
     line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    
     font-size: var(--meta-font-size) !important;
     line-height: 1.5;
     color: #9a9a9a;
-    margin-top: 10px;
     width: 100%;
-    max-width: 95%;
-    white-space: normal;
+    
+    /* Add Right Padding so text doesn't overlap the fixed button */
+    padding-right: 90px; 
+    box-sizing: border-box;
+    white-space: pre-wrap; 
+}
+
+/* State: Expanded */
+.custom-description.expanded {
+    -webkit-line-clamp: unset !important;
+    line-clamp: unset !important;
+    overflow: visible !important;
+}
+
+/* Toggle Button - FIXED LOCATION (Calculated from Top) */
+.desc-toggle-btn {
+    position: absolute !important;
+    
+    /* X-AXIS: Align Right */
+    right: 0 !important; 
+    
+    /* Y-AXIS: Fixed location based on Thumbnail Height 
+       Formula: HeaderOffset + ThumbHeight - ButtonHeight 
+       (Assumes 16:9 Aspect Ratio for thumbnail: 0.5625) 
+    */
+    top: calc(var(--header-height) + var(--channel-info-padding-bottom) + (var(--thumbnail-width) * 0.5625) - 32px) !important;
+    bottom: auto !important;
+    
+    /* PILL STYLE */
+    background-color: var(--yt-spec-badge-chip-background, rgba(255, 255, 255, 0.1));
+    border: 1px solid transparent;
+    border-radius: 18px; 
+    padding: 0 14px;     
+    
+    /* Text Style */
+    color: var(--yt-spec-text-primary);
+    font-size: 12px;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 500;
+    text-transform: none; 
+    cursor: pointer;
+    
+    /* Layout */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+    z-index: 105;
+    transition: background-color 0.2s ease;
+}
+
+.desc-toggle-btn:hover {
+    background-color: var(--yt-spec-badge-chip-background-hover, rgba(255, 255, 255, 0.2));
 }
 
 /* 7. MISC */

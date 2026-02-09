@@ -116,11 +116,13 @@ function processVideoDescriptions() {
 
         // If reusing an item that has an old description, clean it up
         if (item.dataset.processedUrl && item.dataset.processedUrl !== currentUrl) {
+            const oldContainer = item.querySelector('.custom-description-container');
+            if (oldContainer) oldContainer.remove();
             item.querySelectorAll('.custom-description').forEach(el => el.remove());
-            item.dataset.descFetching = 'false'; // Reset fetching lock
+            item.dataset.descFetching = 'false'; 
         }
 
-        // Prevent double-fetching for the same URL
+        // Prevent double-fetching
         if (item.dataset.descFetching === 'true') return;
 
         const metadataContainer = item.querySelector('yt-content-metadata-view-model');
@@ -138,23 +140,58 @@ function processVideoDescriptions() {
                      return;
                 }
 
-                const match = html.match(/<meta name="description" content="([^"]*)"/);
+                // EXTRACT DESCRIPTION
+                const jsonMatch = html.match(/"description":\{"simpleText":"((?:[^"\\]|\\.)*?)"\}/);
+                const metaMatch = html.match(/<meta name="description" content="([^"]*)"/);
 
-                if (match && match[1]) {
-                    const rawDesc = match[1];
-                    if (rawDesc && rawDesc !== 'null') {
-                        // FIX: Remove ANY existing descriptions before appending a new one.
-                        // This prevents duplicates if multiple fetches finish for the same item.
-                        const existingDescriptions = metadataContainer.querySelectorAll('.custom-description');
-                        existingDescriptions.forEach(el => el.remove());
+                let fullDescText = '';
 
-                        const descDiv = document.createElement('div');
-                        descDiv.className = 'custom-description';
-                        descDiv.textContent = decodeHtmlEntities(rawDesc);
-                        metadataContainer.appendChild(descDiv);
-                    }
+                if (jsonMatch && jsonMatch[1]) {
+                    try {
+                        fullDescText = JSON.parse('"' + jsonMatch[1] + '"');
+                    } catch (e) {}
                 }
-                // Mark as successfully processed for THIS url
+                
+                if (!fullDescText && metaMatch && metaMatch[1]) {
+                     fullDescText = decodeHtmlEntities(metaMatch[1]);
+                }
+
+                if (fullDescText && fullDescText !== 'null') {
+                    // Cleanup existing
+                    const existingWrapper = metadataContainer.querySelector('.custom-description-container');
+                    if (existingWrapper) existingWrapper.remove();
+                    metadataContainer.querySelectorAll('.custom-description').forEach(el => el.remove());
+
+                    // Create Wrapper
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'custom-description-container';
+
+                    // Create Text Div
+                    const descDiv = document.createElement('div');
+                    descDiv.className = 'custom-description';
+                    descDiv.textContent = fullDescText; 
+                    wrapper.appendChild(descDiv);
+
+                    // Add "Show More" Button
+                    // We check length > 150 OR if it has newlines
+                    if (fullDescText.length > 150 || fullDescText.includes('\n')) {
+                        const toggleBtn = document.createElement('button');
+                        toggleBtn.className = 'desc-toggle-btn';
+                        toggleBtn.textContent = 'Show More';
+                        
+                        toggleBtn.onclick = (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const isExpanded = descDiv.classList.toggle('expanded');
+                            toggleBtn.textContent = isExpanded ? 'Show Less' : 'Show More';
+                        };
+                        
+                        // Append button to wrapper (CSS handles absolute positioning)
+                        wrapper.appendChild(toggleBtn);
+                    }
+
+                    metadataContainer.appendChild(wrapper);
+                }
                 item.dataset.processedUrl = currentUrl;
             })
             .catch(err => {
