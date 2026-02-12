@@ -9,7 +9,7 @@ const defaultSettings = {
     metaFontSize: 10,  // pt
     notifyWidth: 150,   // px
     highlightLinks: true,
-    viewModeHome: 'list', // Default for Home
+    viewModeHome: 'grid', // Default for Home
     viewModeSubs: 'list'  // Default for Subscriptions
 };
 

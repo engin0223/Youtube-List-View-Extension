@@ -6,7 +6,7 @@ const defaults = {
     metaFontSize: 10,  // pt
     notifyWidth: 150,   // px
     highlightLinks: true,
-    viewModeHome: 'list', // New Default
+    viewModeHome: 'grid', // New Default
     viewModeSubs: 'list'  // New Default
 };
 
