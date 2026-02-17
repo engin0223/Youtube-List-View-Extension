@@ -27,7 +27,7 @@
     align-items: center;
     gap: 4px;
     padding-left: 4px;
-    z-index: auto; /* Ensure it's above standard elements */
+    z-index: 2018; /* Ensure it's above standard elements */
 }
 
 /* --- HOME PAGE SPECIFIC STYLES --- */
@@ -45,7 +45,7 @@
     box-shadow: -10px 0 15px -5px var(--yt-spec-base-background);
     
     /* Ensure it sits ON TOP of the chips (Chips usually have z-index ~100-200) */
-    z-index: auto !important; 
+    z-index: 2018 !important; 
 }
 
 .view-toggle-btn {
