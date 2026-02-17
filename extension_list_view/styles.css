@@ -27,7 +27,7 @@
     align-items: center;
     gap: 4px;
     padding-left: 4px;
-    z-index: 9999; /* Ensure it's above standard elements */
+    z-index: auto; /* Ensure it's above standard elements */
 }
 
 /* --- HOME PAGE SPECIFIC STYLES --- */
@@ -45,7 +45,7 @@
     box-shadow: -10px 0 15px -5px var(--yt-spec-base-background);
     
     /* Ensure it sits ON TOP of the chips (Chips usually have z-index ~100-200) */
-    z-index: 9999 !important; 
+    z-index: auto !important; 
 }
 
 .view-toggle-btn {
@@ -184,7 +184,7 @@ html.list-view-active ytd-browse[page-subtype="home"] .yt-lockup-view-model__con
     overflow: hidden !important;
     margin-top: 0 !important;
     position: relative !important;
-    z-index: 1 !important;
+    z-index: auto !important;
 }
 
 /* 4. METADATA RESET */
@@ -221,7 +221,7 @@ html.list-view-active ytd-browse[page-subtype="home"] .yt-lockup-metadata-view-m
     left: 0 !important;
     width: 32px !important;
     height: 32px !important;
-    z-index: 100 !important;
+    z-index: auto !important;
     margin: 0 !important;
     border-radius: 50% !important;
 }
@@ -250,7 +250,7 @@ html.list-view-active ytd-browse[page-subtype="home"] .cloned-channel-name {
     top: 0 !important;
     left: 42px !important;
     height: 32px !important;
-    z-index: 100 !important;
+    z-index: auto !important;
     background: transparent !important;
     padding: 0 !important;
     display: flex !important;
@@ -397,7 +397,7 @@ html.list-view-active .desc-toggle-btn {
     align-items: center;
     justify-content: center;
     height: 32px;
-    z-index: 105;
+    z-index: auto;
     transition: background-color 0.2s ease;
 }
 
