@@ -357,6 +357,11 @@ html.list-view-active .custom-description {
     padding-right: 90px; 
     box-sizing: border-box;
     white-space: pre-wrap; 
+    
+    /* FIX FOR OVERFLOW */
+    overflow-wrap: anywhere; 
+    word-wrap: break-word;
+    word-break: break-word;
 }
 
 html.list-view-active .custom-description.expanded {
