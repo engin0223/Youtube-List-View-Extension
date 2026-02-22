@@ -300,9 +300,12 @@ function processVideoDescriptions() {
 
         const currentUrl = linkEl.href;
 
-        // CHECK: If we already fetched for THIS specific URL, skip.
-        // If the element is reused (recycled) for a different video, the URLs won't match, and we will update.
-        if (item.dataset.processedUrl === currentUrl) {
+        const metadataContainer = item.querySelector('yt-content-metadata-view-model');
+        if (!metadataContainer) return;
+
+        // CHECK: Ensure the URL matches AND the description container wasn't destroyed by an Undo/Re-render
+        const hasDescription = metadataContainer.querySelector('.custom-description-container');
+        if (item.dataset.processedUrl === currentUrl && hasDescription) {
             return;
         }
 
@@ -316,9 +319,6 @@ function processVideoDescriptions() {
 
         // Prevent double-fetching
         if (item.dataset.descFetching === 'true') return;
-
-        const metadataContainer = item.querySelector('yt-content-metadata-view-model');
-        if (!metadataContainer) return;
 
         item.dataset.descFetching = 'true';
         
@@ -395,6 +395,7 @@ function processVideoDescriptions() {
                     metadataContainer.appendChild(wrapper);
                 }
                 item.dataset.processedUrl = currentUrl;
+                item.dataset.descFetching = 'false';
             })
             .catch(err => {
                 // On error, reset so we might try again later
