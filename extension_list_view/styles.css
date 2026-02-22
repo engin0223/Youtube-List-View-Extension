@@ -441,3 +441,50 @@ html.list-view-active .ytLockupAttachmentsViewModelHost {
     width: var(--notify-width) !important;
     max-width: 100% !important;
 }
+
+/* ==========================================================================
+   FIX: HIDDEN / DISMISSED VIDEOS
+   Prevents the "Video hidden from feed" notification from becoming massive
+   ========================================================================== */
+
+/* 1. Override the strict flex layout and custom top-padding from your main CSS */
+html.list-view-active ytd-browse[page-subtype="subscriptions"] ytd-rich-grid-renderer > #contents > ytd-rich-item-renderer:has(.ytDismissibleItemReplacedContent) .yt-lockup-view-model,
+html.list-view-active ytd-browse[page-subtype="home"] ytd-rich-grid-renderer > #contents > ytd-rich-item-renderer:has(.ytDismissibleItemReplacedContent) .yt-lockup-view-model {
+    display: block !important;
+    padding-top: 0 !important; 
+    height: auto !important;
+}
+
+/* 2. Kill the 16:9 aspect ratio completely (which causes the massive height) */
+html.list-view-active ytd-rich-item-renderer:has(.ytDismissibleItemReplacedContent) .ytDismissibleItemAspectRatio16By9,
+html.list-view-active ytd-rich-item-renderer:has(.ytDismissibleItemReplacedContent) .ytDismissibleItemReplacedContent {
+    padding-bottom: 0 !important; 
+    padding-top: 0 !important;
+    aspect-ratio: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+}
+
+/* Kills the YouTube ::before pseudo-element that sometimes forces the padding ratio */
+html.list-view-active ytd-rich-item-renderer:has(.ytDismissibleItemReplacedContent) .ytDismissibleItemAspectRatio16By9::before {
+    display: none !important;
+    padding-bottom: 0 !important;
+}
+
+/* 3. Re-center the notification banner */
+html.list-view-active ytd-rich-item-renderer:has(.ytDismissibleItemReplacedContent) .ytDismissibleItemAspectRatioContainer {
+    position: static !important;
+    padding: 24px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    height: auto !important;
+}
+
+/* 4. Reset the notification box sizing */
+html.list-view-active ytd-rich-item-renderer:has(.ytDismissibleItemReplacedContent) notification-multi-action-renderer {
+    position: static !important;
+    height: auto !important;
+    width: auto !important;
+    margin: 0 auto !important;
+}
