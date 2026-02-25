@@ -7,7 +7,8 @@ const defaults = {
     notifyWidth: 150,   // px
     highlightLinks: true,
     viewModeHome: 'grid', // New Default
-    viewModeSubs: 'list'  // New Default
+    viewModeSubs: 'list',  // New Default
+    changeShortsScroll: false // New Setting to control Shorts scroll behavior
 };
 
 // Elements
@@ -23,6 +24,7 @@ const inputs = {
     notifyWidth: document.getElementById('notifyWidth'),
     notifyWidthSlider: document.getElementById('notifyWidthSlider'),
     highlightLinks: document.getElementById('highlightLinks'),
+    changeShortsScroll: document.getElementById('changeShortsScroll'),
     // New Icons
     iconList: document.getElementById('icon-list'),
     iconGrid: document.getElementById('icon-grid')
@@ -41,10 +43,11 @@ function getCurrentSettings() {
         metaFontSize: inputs.metaFontSize.value,
         notifyWidth: inputs.notifyWidth.value,
         highlightLinks: inputs.highlightLinks.checked,
+        changeShortsScroll: inputs.changeShortsScroll.checked,
         
         // Pass back the stored modes (Popup doesn't change these, only displays them)
         viewModeHome: storedSettings.viewModeHome,
-        viewModeSubs: storedSettings.viewModeSubs
+        viewModeSubs: storedSettings.viewModeSubs,
     };
 }
 
@@ -70,8 +73,16 @@ function updateIconState() {
 // Highlight Links Toggle
 if (inputs.highlightLinks) {
     inputs.highlightLinks.addEventListener('change', () => {
-        sendToTab();
         saveToStorage();
+        sendToTab();
+    });
+}
+
+// Change Shorts Scroll Behavior Toggle
+if (inputs.changeShortsScroll) {
+    inputs.changeShortsScroll.addEventListener('change', () => {
+        saveToStorage();
+        sendToTab();
     });
 }
 
@@ -178,7 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Update Inputs
             for (const key in items) {
-                if (key === 'highlightLinks' && inputs[key]) {
+                if ((key === 'highlightLinks' || key === 'changeShortsScroll') &&  inputs[key]) {
                     inputs[key].checked = items[key];
                 }
                 else {
@@ -199,7 +210,7 @@ document.getElementById('resetBtn').addEventListener('click', () => {
     
     chrome.storage.sync.set(resetSettings, () => {
         for (const key in resetSettings) {
-            if (key === 'highlightLinks' && inputs[key]) {
+            if ((key === 'highlightLinks' || key === 'changeShortsScroll') && inputs[key]) {
                 inputs[key].checked = resetSettings[key];
             }
             // Handle Checkboxes and Sliders

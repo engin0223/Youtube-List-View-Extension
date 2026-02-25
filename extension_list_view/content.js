@@ -10,7 +10,8 @@ const defaultSettings = {
     notifyWidth: 150,   // px
     highlightLinks: true,
     viewModeHome: 'grid', // Default for Home
-    viewModeSubs: 'list'  // Default for Subscriptions
+    viewModeSubs: 'list',  // Default for Subscriptions
+    changeShortsScroll: false // Default to changing Shorts scroll behavior
 };
 
 // Global cache to handle navigation changes instantly
@@ -45,6 +46,9 @@ function applySettings(settings) {
     } else {
         enableListView();
     }
+
+    // Handle Shorts scroll behavior
+    updateShortsScrollSetting(settings);
 }
 
 function enableListView() {
@@ -571,6 +575,60 @@ const observer = new MutationObserver((mutations) => {
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
+
+
+
+
+// ==========================================================================
+// LOGIC: CHANGE SHORTS SCROLL BEHAVIOR
+// ==========================================================================
+function handleShortsScrollBehavior(e) {
+    const buttonRenderer = e.target.closest('.expand-collapse-button');
+    if (!buttonRenderer) return;
+
+    const button = buttonRenderer.querySelector('button');
+    const textElement = buttonRenderer.querySelector('.yt-core-attributed-string');
+    
+    const ariaLabel = button ? button.getAttribute('aria-label') : '';
+    const textContent = textElement ? textElement.textContent.trim() : '';
+    
+    const isShowLess = 
+        (ariaLabel && ariaLabel.toLowerCase() === 'show less') ||
+        (textContent && textContent.toLowerCase() === 'show less');
+
+    if (!isShowLess) return;
+
+    const shelf = buttonRenderer.closest('ytd-rich-shelf-renderer');
+    if (!shelf) return;
+
+    const headerHeight = 56;
+    const rect = shelf.getBoundingClientRect();
+
+    if (rect.top < headerHeight) {
+        setTimeout(() => {
+            const newRect = shelf.getBoundingClientRect();
+            const absoluteTop = newRect.top + window.scrollY;
+
+            window.scrollTo({
+                top: absoluteTop - headerHeight - 16,
+                behavior: 'smooth'
+            });
+        }, 500);
+    }
+}
+
+// ==========================================================================
+// TOGGLE THE FEATURE BASED ON SETTINGS
+// ==========================================================================
+function updateShortsScrollSetting(settings) {
+    if (settings.changeShortsScroll) {
+        // Add the listener. If it's already added, JS is smart enough not to add a duplicate.
+        document.addEventListener('click', handleShortsScrollBehavior);
+    } else {
+        // Remove the listener. This now works because we pass the EXACT same function reference.
+        document.removeEventListener('click', handleShortsScrollBehavior);
+    }
+}
 
 // 2. WATCH FOR PAGE NAVIGATION (Home <-> Subscriptions transition)
 document.addEventListener('yt-navigate-finish', () => {
