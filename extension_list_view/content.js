@@ -11,7 +11,8 @@ const defaultSettings = {
     highlightLinks: true,
     viewModeHome: 'grid', // Default for Home
     viewModeSubs: 'list',  // Default for Subscriptions
-    changeShortsScroll: false // Default to changing Shorts scroll behavior
+    changeShortsScroll: false, // Default to changing Shorts scroll behavior
+    hideMostRelevant: false // Default to showing "Most Relevant" section
 };
 
 // Global cache to handle navigation changes instantly
@@ -49,6 +50,9 @@ function applySettings(settings) {
 
     // Handle Shorts scroll behavior
     updateShortsScrollSetting(settings);
+
+    // Apply "Most Relevant" setting
+    processMostRelevantSection();
 }
 
 function enableListView() {
@@ -527,6 +531,37 @@ function injectTemporaryPanel() {
 }
 
 // ==========================================================================
+// LOGIC: HIDE "MOST RELEVANT" SECTION
+// ==========================================================================
+function processMostRelevantSection() {
+    // If the setting is disabled, un-hide any previously hidden sections
+    if (!cachedSettings.hideMostRelevant) {
+        const hiddenSections = document.querySelectorAll('ytd-rich-section-renderer[data-hidden-by-ext="true"]');
+        hiddenSections.forEach(section => {
+            section.style.display = '';
+            section.removeAttribute('data-hidden-by-ext');
+        });
+        return;
+    }
+
+    // Find all section titles
+    const titles = document.querySelectorAll('ytd-rich-section-renderer span#title');
+    
+    titles.forEach(title => {
+        // Use case-insensitive matching in case YouTube changes capitalization
+        if (title.textContent && title.textContent.trim().toLowerCase() === 'most relevant') {
+            const section = title.closest('ytd-rich-section-renderer');
+            // Hide the entire section if it isn't hidden already
+            if (section && section.style.display !== 'none') {
+                section.style.display = 'none';
+                section.setAttribute('data-hidden-by-ext', 'true');
+            }
+        }
+    });
+}
+
+
+// ==========================================================================
 // MAIN OBSERVER & NAVIGATION LISTENERS
 // ==========================================================================
 
@@ -570,6 +605,7 @@ const observer = new MutationObserver((mutations) => {
                 injectTemporaryPanel();
             }
         }
+        processMostRelevantSection();
         injectViewToggle();
     }
 });

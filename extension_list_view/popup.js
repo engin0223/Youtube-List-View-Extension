@@ -8,7 +8,8 @@ const defaults = {
     highlightLinks: true,
     viewModeHome: 'grid', // New Default
     viewModeSubs: 'list',  // New Default
-    changeShortsScroll: false // New Setting to control Shorts scroll behavior
+    changeShortsScroll: false, // New Setting to control Shorts scroll behavior
+    hideMostRelevant: false // New Setting to hide "Most Relevant" section in search results
 };
 
 // Elements
@@ -25,6 +26,7 @@ const inputs = {
     notifyWidthSlider: document.getElementById('notifyWidthSlider'),
     highlightLinks: document.getElementById('highlightLinks'),
     changeShortsScroll: document.getElementById('changeShortsScroll'),
+    hideMostRelevant: document.getElementById('hideMostRelevant'),
     // New Icons
     iconList: document.getElementById('icon-list'),
     iconGrid: document.getElementById('icon-grid')
@@ -44,6 +46,7 @@ function getCurrentSettings() {
         notifyWidth: inputs.notifyWidth.value,
         highlightLinks: inputs.highlightLinks.checked,
         changeShortsScroll: inputs.changeShortsScroll.checked,
+        hideMostRelevant: inputs.hideMostRelevant.checked,
         
         // Pass back the stored modes (Popup doesn't change these, only displays them)
         viewModeHome: storedSettings.viewModeHome,
@@ -81,6 +84,14 @@ if (inputs.highlightLinks) {
 // Change Shorts Scroll Behavior Toggle
 if (inputs.changeShortsScroll) {
     inputs.changeShortsScroll.addEventListener('change', () => {
+        saveToStorage();
+        sendToTab();
+    });
+}
+
+// Hide Most Relevant Section Toggle
+if (inputs.hideMostRelevant) {
+    inputs.hideMostRelevant.addEventListener('change', () => {
         saveToStorage();
         sendToTab();
     });
@@ -189,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Update Inputs
             for (const key in items) {
-                if ((key === 'highlightLinks' || key === 'changeShortsScroll') &&  inputs[key]) {
+                if ((key === 'highlightLinks' || key === 'changeShortsScroll' || key === 'hideMostRelevant') && inputs[key]) {
                     inputs[key].checked = items[key];
                 }
                 else {
@@ -210,7 +221,7 @@ document.getElementById('resetBtn').addEventListener('click', () => {
     
     chrome.storage.sync.set(resetSettings, () => {
         for (const key in resetSettings) {
-            if ((key === 'highlightLinks' || key === 'changeShortsScroll') && inputs[key]) {
+            if ((key === 'highlightLinks' || key === 'changeShortsScroll' || key === 'hideMostRelevant') && inputs[key]) {
                 inputs[key].checked = resetSettings[key];
             }
             // Handle Checkboxes and Sliders
