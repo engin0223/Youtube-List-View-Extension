@@ -9,7 +9,8 @@ const defaults = {
     viewModeHome: 'grid', // New Default
     viewModeSubs: 'list',  // New Default
     changeShortsScroll: false, // New Setting to control Shorts scroll behavior
-    hideMostRelevant: false // New Setting to hide "Most Relevant" section in search results
+    hideMostRelevant: false, // New Setting to hide "Most Relevant" section in search results
+    hideDividers: false // New Setting to hide dividers in list view
 };
 
 // Elements
@@ -27,6 +28,7 @@ const inputs = {
     highlightLinks: document.getElementById('highlightLinks'),
     changeShortsScroll: document.getElementById('changeShortsScroll'),
     hideMostRelevant: document.getElementById('hideMostRelevant'),
+    hideDividers: document.getElementById('hideDividers'),
     // New Icons
     iconList: document.getElementById('icon-list'),
     iconGrid: document.getElementById('icon-grid')
@@ -47,6 +49,7 @@ function getCurrentSettings() {
         highlightLinks: inputs.highlightLinks.checked,
         changeShortsScroll: inputs.changeShortsScroll.checked,
         hideMostRelevant: inputs.hideMostRelevant.checked,
+        hideDividers: inputs.hideDividers.checked,
         
         // Pass back the stored modes (Popup doesn't change these, only displays them)
         viewModeHome: storedSettings.viewModeHome,
@@ -73,29 +76,16 @@ function updateIconState() {
     }
 }
 
-// Highlight Links Toggle
-if (inputs.highlightLinks) {
-    inputs.highlightLinks.addEventListener('change', () => {
-        saveToStorage();
-        sendToTab();
-    });
-}
-
-// Change Shorts Scroll Behavior Toggle
-if (inputs.changeShortsScroll) {
-    inputs.changeShortsScroll.addEventListener('change', () => {
-        saveToStorage();
-        sendToTab();
-    });
-}
-
-// Hide Most Relevant Section Toggle
-if (inputs.hideMostRelevant) {
-    inputs.hideMostRelevant.addEventListener('change', () => {
-        saveToStorage();
-        sendToTab();
-    });
-}
+// Create a set of toggle inputs for easier management
+const toggleInputs = [inputs.highlightLinks, inputs.changeShortsScroll, inputs.hideMostRelevant, inputs.hideDividers];  
+toggleInputs.forEach((toggle) => {
+    if (toggle) {
+        toggle.addEventListener('change', () => {
+            saveToStorage();
+            sendToTab();
+        });
+    }
+});
 
 // Helper: Send settings to ALL YouTube tabs
 function sendToTab() {
@@ -178,6 +168,11 @@ setupControl(inputs.titleFontSize, inputs.titleFontSizeSlider);
 setupControl(inputs.metaFontSize, inputs.metaFontSizeSlider);
 setupControl(inputs.notifyWidth, inputs.notifyWidthSlider);
 
+// Create a set of toggle inputs's names for easier if check in listener
+const toggleInputNames = ['highlightLinks', 'changeShortsScroll', 'hideMostRelevant', 'hideDividers'];
+
+
+
 // Load saved settings
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Determine Context (Are we looking at Subs or Home?)
@@ -200,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Update Inputs
             for (const key in items) {
-                if ((key === 'highlightLinks' || key === 'changeShortsScroll' || key === 'hideMostRelevant') && inputs[key]) {
+                if (toggleInputNames.includes(key) && inputs[key]) {
                     inputs[key].checked = items[key];
                 }
                 else {
@@ -221,7 +216,7 @@ document.getElementById('resetBtn').addEventListener('click', () => {
     
     chrome.storage.sync.set(resetSettings, () => {
         for (const key in resetSettings) {
-            if ((key === 'highlightLinks' || key === 'changeShortsScroll' || key === 'hideMostRelevant') && inputs[key]) {
+            if (toggleInputNames.includes(key) && inputs[key]) {
                 inputs[key].checked = resetSettings[key];
             }
             // Handle Checkboxes and Sliders

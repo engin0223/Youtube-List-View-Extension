@@ -488,3 +488,9 @@ html.list-view-active ytd-rich-item-renderer:has(.ytDismissibleItemReplacedConte
     width: auto !important;
     margin: 0 auto !important;
 }
+
+/* Hide Dividers Toggle Override */
+html.list-view-active.hide-dividers ytd-browse[page-subtype="subscriptions"] ytd-rich-grid-renderer > #contents > ytd-rich-item-renderer,
+html.list-view-active.hide-dividers ytd-browse[page-subtype="home"] ytd-rich-grid-renderer > #contents > ytd-rich-item-renderer {
+    border-bottom: none !important;
+}

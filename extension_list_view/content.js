@@ -12,7 +12,8 @@ const defaultSettings = {
     viewModeHome: 'grid', // Default for Home
     viewModeSubs: 'list',  // Default for Subscriptions
     changeShortsScroll: false, // Default to changing Shorts scroll behavior
-    hideMostRelevant: false // Default to showing "Most Relevant" section
+    hideMostRelevant: false, // Default to showing "Most Relevant" section
+    hideDividers: false // Default to showing dividers in list view
 };
 
 // Global cache to handle navigation changes instantly
@@ -46,6 +47,12 @@ function applySettings(settings) {
         disableListView();
     } else {
         enableListView();
+    }
+
+    if (settings.hideDividers) {
+        document.documentElement.classList.add('hide-dividers');
+    } else {
+        document.documentElement.classList.remove('hide-dividers');
     }
 
     // Handle Shorts scroll behavior
