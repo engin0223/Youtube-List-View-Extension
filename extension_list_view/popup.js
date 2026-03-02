@@ -10,7 +10,8 @@ const defaults = {
     viewModeSubs: 'list',  // New Default
     changeShortsScroll: false, // New Setting to control Shorts scroll behavior
     hideMostRelevant: false, // New Setting to hide "Most Relevant" section in search results
-    hideDividers: false // New Setting to hide dividers in list view
+    hideDividers: false, // New Setting to hide dividers in list view
+    hideShorts: false // New Setting to hide Shorts section on the homepage
 };
 
 // Elements
@@ -29,6 +30,7 @@ const inputs = {
     changeShortsScroll: document.getElementById('changeShortsScroll'),
     hideMostRelevant: document.getElementById('hideMostRelevant'),
     hideDividers: document.getElementById('hideDividers'),
+    hideShorts: document.getElementById('hideShorts'),
     // New Icons
     iconList: document.getElementById('icon-list'),
     iconGrid: document.getElementById('icon-grid')
@@ -50,6 +52,7 @@ function getCurrentSettings() {
         changeShortsScroll: inputs.changeShortsScroll.checked,
         hideMostRelevant: inputs.hideMostRelevant.checked,
         hideDividers: inputs.hideDividers.checked,
+        hideShorts: inputs.hideShorts.checked,
         
         // Pass back the stored modes (Popup doesn't change these, only displays them)
         viewModeHome: storedSettings.viewModeHome,
@@ -77,7 +80,7 @@ function updateIconState() {
 }
 
 // Create a set of toggle inputs for easier management
-const toggleInputs = [inputs.highlightLinks, inputs.changeShortsScroll, inputs.hideMostRelevant, inputs.hideDividers];  
+const toggleInputs = [inputs.highlightLinks, inputs.changeShortsScroll, inputs.hideMostRelevant, inputs.hideDividers, inputs.hideShorts];  
 toggleInputs.forEach((toggle) => {
     if (toggle) {
         toggle.addEventListener('change', () => {
@@ -169,7 +172,7 @@ setupControl(inputs.metaFontSize, inputs.metaFontSizeSlider);
 setupControl(inputs.notifyWidth, inputs.notifyWidthSlider);
 
 // Create a set of toggle inputs's names for easier if check in listener
-const toggleInputNames = ['highlightLinks', 'changeShortsScroll', 'hideMostRelevant', 'hideDividers'];
+const toggleInputNames = ['highlightLinks', 'changeShortsScroll', 'hideMostRelevant', 'hideDividers', 'hideShorts'];
 
 
 

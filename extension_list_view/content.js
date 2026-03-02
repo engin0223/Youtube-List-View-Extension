@@ -13,7 +13,8 @@ const defaultSettings = {
     viewModeSubs: 'list',  // Default for Subscriptions
     changeShortsScroll: false, // Default to changing Shorts scroll behavior
     hideMostRelevant: false, // Default to showing "Most Relevant" section
-    hideDividers: false // Default to showing dividers in list view
+    hideDividers: false, // Default to showing dividers in list view
+    hideShorts: false // New Setting to hide Shorts section on the homepage
 };
 
 // Global cache to handle navigation changes instantly
@@ -53,6 +54,12 @@ function applySettings(settings) {
         document.documentElement.classList.add('hide-dividers');
     } else {
         document.documentElement.classList.remove('hide-dividers');
+    }
+
+    if (settings.hideShorts) {
+        document.documentElement.classList.add('hide-shorts');
+    } else {
+        document.documentElement.classList.remove('hide-shorts');
     }
 
     // Handle Shorts scroll behavior
