@@ -2,92 +2,277 @@
 <html>
 <head>
   <style>
-    body {
-      width: 320px;
-      padding: 15px;
-      font-family: 'Roboto', sans-serif;
-      background-color: #212121;
-      color: #fff;
+    /* --- CSS VARIABLES FOR THEMING --- */
+    :root {
+      /* Dark Mode (Default) */
+      --bg-color: #0f0f0f;
+      --text-main: #f1f1f1;
+      --text-muted: #aaa;
+      --panel-bg: #212121;
+      --border-color: #3f3f3f;
+      --accent-blue: #3ea6ff;
+      --accent-hover: #065fd4;
+      --icon-default: #717171;
+      --toggle-off-bg: #444;
     }
-    h2 {
-      margin-top: 0;
-      font-size: 16px;
-      border-bottom: 1px solid #3f3f3f;
-      padding-bottom: 10px;
+
+    body.light-theme {
+      /* Light Mode Overrides */
+      --bg-color: #f9f9f9;
+      --text-main: #0f0f0f;
+      --text-muted: #606060;
+      --panel-bg: #ffffff;
+      --border-color: #e0e0e0;
+      --accent-blue: #065fd4; 
+      --accent-hover: #3ea6ff;
+      --icon-default: #909090;
+      --toggle-off-bg: #ccc;
+    }
+
+    /* --- MODERN RESET & BASE --- */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      width: 600px; /* Widened for two columns */
+      margin: 0;
+      padding: 20px;
+      font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Prevent text selection for a more app-like feel */
+    body, h2, h3, label {
+      user-select: none;
+    }
+
+    /* --- HEADER AREA --- */
+    .header-area {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 15px;
       margin-bottom: 20px;
     }
-    .control-group {
-      margin-bottom: 15px;
+    .header-area h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 500;
+      letter-spacing: 0.2px;
     }
-    label {
+
+    /* --- ICONS --- */
+    .icon-row {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      background: var(--panel-bg);
+      padding: 6px 12px;
+      border-radius: 8px;
+    }
+    .mode-icon {
+      width: 22px;
+      height: 22px;
+      fill: var(--icon-default);
+      transition: fill 0.3s ease;
+      cursor: pointer;
+    }
+    .mode-icon.active, .mode-icon:hover {
+      fill: var(--accent-blue);
+    }
+
+    /* --- GRID LAYOUT (Restored) --- */
+    .grid-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px; /* Space between the two columns */
+    }
+    .col {
+      display: flex;
+      flex-direction: column;
+    }
+    .column-title {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: 0;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* --- SLIDER CONTROLS --- */
+    .control-group {
+      margin-bottom: 18px;
+    }
+    .control-group label {
       display: block;
-      font-size: 12px;
-      color: #aaa;
-      margin-bottom: 5px;
+      font-size: 13px;
+      color: var(--text-main);
+      margin-bottom: 8px;
     }
     .input-row {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
     input[type="range"] {
       flex-grow: 1;
-      accent-color: #3ea6ff;
+      accent-color: var(--accent-blue);
       cursor: pointer;
+      height: 4px;
+      background: var(--border-color);
+      border-radius: 2px;
+      outline: none;
+      appearance: none; 
+      -webkit-appearance: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent-blue);
+      cursor: pointer;
+      border: none;
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent-blue);
+      cursor: pointer;
+      border: none;
     }
     input[type="text"], input[type="number"] {
-      width: 60px;
-      background: #121212;
-      border: 1px solid #3f3f3f;
-      color: #fff;
-      padding: 4px;
-      border-radius: 4px;
-      text-align: right;
+      width: 55px;
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 6px;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
     }
-    
-    /* --- NEW ICON STYLES --- */
-    .icon-row {
-      display: flex;
-      align-items: center;
-      gap: 20px; /* Space between icons */
-      padding-top: 5px;
+    input[type="number"]:focus {
+      border-color: var(--accent-blue);
     }
-    .mode-icon {
-      width: 24px;
-      height: 24px;
-      fill: #444; /* Inactive color (dark grey) */
-      transition: fill 0.3s ease;
-    }
-    .mode-icon.active {
-      fill: #3ea6ff; /* Active color (YouTube Blue) */
-    }
-    /* ----------------------- */
 
+    /* --- MODERN TOGGLE SWITCHES --- */
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .toggle-row:last-of-type {
+      border-bottom: none;
+      margin-bottom: 24px;
+    }
+    .toggle-row label {
+      font-size: 13px;
+      color: var(--text-main);
+      cursor: pointer;
+      margin: 0;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 36px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+    .switch input { 
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: var(--toggle-off-bg);
+      transition: .3s;
+      border-radius: 20px;
+    }
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+    input:checked + .toggle-slider {
+      background-color: var(--accent-blue);
+    }
+    input:checked + .toggle-slider:before {
+      transform: translateX(16px);
+    }
+
+    /* --- BUTTONS --- */
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: auto;
+    }
     button.reset {
       width: 100%;
-      padding: 8px;
-      background-color: transparent;
-      border: 1px solid #3f3f3f;
-      color: #aaa;
-      border-radius: 2px;
+      padding: 10px;
+      background-color: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      border-radius: 8px;
       cursor: pointer;
-      font-size: 12px;
-      margin-top: 10px;
-      transition: all 0.2s;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s ease;
     }
     button.reset:hover {
+      background-color: var(--accent-blue);
+      border-color: var(--accent-blue);
       color: #fff;
-      border-color: #aaa;
-      background-color: rgba(255,255,255,0.05);
+    }
+    button#clearCacheBtn:hover {
+      background-color: var(--text-main); 
+      border-color: var(--text-main);
+      color: var(--bg-color);
+    }
+
+    /* Hide number input spinners */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+    input[type=number] {
+      appearance: textfield; /* Standard */
     }
   </style>
 </head>
 <body>
-  <h2>List View Settings</h2>
 
-  <div class="control-group">
-    <label>Current View Mode</label>
+  <div class="header-area">
+    <h2>List View Settings</h2>
+    
     <div class="icon-row">
+      <div id="themeToggle" class="mode-icon" title="Toggle Light/Dark Theme" style="cursor: pointer;">
+          <svg viewBox="0 0 24 24" height="22" width="22">
+            <path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"></path>
+          </svg>
+      </div>
+      
       <div id="icon-grid" class="mode-icon" title="Grid View Active">
         <svg viewBox="0 0 24 24" height="24" width="24">
           <rect x="2" y="4" width="5" height="7" rx="1"></rect>
@@ -115,82 +300,116 @@
     </div>
   </div>
 
-  <div class="control-group">
-    <label>Container Width (%)</label>
-    <div class="input-row">
-      <input type="range" id="listContainerWidthSlider" min="51" max="100" value="90">
-      <input type="number" id="listContainerWidth" value="90">
+  <div class="grid-container">
+    
+    <div class="col">
+      <h3 class="column-title">Layout & Sizes</h3>
+
+      <div class="control-group">
+        <label>Container Width (%)</label>
+        <div class="input-row">
+          <input type="range" id="listContainerWidthSlider" min="51" max="100" value="90">
+          <input type="number" id="listContainerWidth" value="90">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>Thumbnail Width (px)</label>
+        <div class="input-row">
+          <input type="range" id="thumbnailWidthSlider" min="150" max="400" value="260">
+          <input type="number" id="thumbnailWidth" value="260">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>Title Font Size (pt)</label>
+        <div class="input-row">
+          <input type="range" id="titleFontSizeSlider" min="10" max="40" step="1" value="13">
+          <input type="number" id="titleFontSize" step="1" value="13">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>Meta & Description Size (pt)</label>
+        <div class="input-row">
+          <input type="range" id="metaFontSizeSlider" min="8" max="24" step="1" value="10">
+          <input type="number" id="metaFontSize" step="1" value="10">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>Notify Button Width (px)</label>
+        <div class="input-row">
+          <input type="range" id="notifyWidthSlider" min="100" max="700" value="150">
+          <input type="number" id="notifyWidth" value="150">
+        </div>
+      </div>
+    </div>
+
+    <div class="col" style="display: flex; flex-direction: column;">
+      <h3 class="column-title">Features & Toggles</h3>
+
+      <div class="toggle-row">
+        <label for="highlightLinks">Highlight Links (Blue)</label>
+        <label class="switch">
+          <input type="checkbox" id="highlightLinks" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <label for="changeShortsScroll">Fix Shorts Scroll Behavior</label>
+        <label class="switch">
+          <input type="checkbox" id="changeShortsScroll">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <label for="hideMostRelevant">Hide "Most Relevant" Section</label>
+        <label class="switch">
+          <input type="checkbox" id="hideMostRelevant">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <label for="hideDividers">Hide Horizontal Dividers</label>
+        <label class="switch">
+          <input type="checkbox" id="hideDividers">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <label for="hideShorts">Hide Shorts Section</label>
+        <label class="switch">
+          <input type="checkbox" id="hideShorts">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="control-group">
+        <label>Description Cache Max Size (videos)</label>
+        <div class="input-row">
+          <input type="number" id="cacheMaxSize" value="200">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>Description Cache TTL (minutes)</label>
+        <div class="input-row">
+          <input type="number" id="cacheTTL" value="60">
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <button id="clearCacheBtn" class="reset">Clear Description Cache</button>
+        <button id="resetBtn" class="reset">Reset to Defaults</button>
+      </div>
+
     </div>
   </div>
-
-  <div class="control-group">
-    <label>Thumbnail Width (px)</label>
-    <div class="input-row">
-      <input type="range" id="thumbnailWidthSlider" min="150" max="400" value="260">
-      <input type="number" id="thumbnailWidth" value="260">
-    </div>
-  </div>
-
-  <div class="control-group">
-    <label>Title Font Size (pt)</label>
-    <div class="input-row">
-      <input type="range" id="titleFontSizeSlider" min="10" max="40" step="1" value="13">
-      <input type="number" id="titleFontSize" step="1" value="13">
-    </div>
-  </div>
-
-  <div class="control-group">
-    <label>Meta & Description Size (pt)</label>
-    <div class="input-row">
-      <input type="range" id="metaFontSizeSlider" min="8" max="24" step="1" value="10">
-      <input type="number" id="metaFontSize" step="1" value="10">
-    </div>
-  </div>
-
-  <div class="control-group">
-    <label>Notify Button Width (px)</label>
-    <div class="input-row">
-      <input type="range" id="notifyWidthSlider" min="100" max="700" value="150">
-      <input type="number" id="notifyWidth" value="150">
-    </div>
-  </div>
-
-  <div class="control-group">
-    <div class="input-row" style="justify-content: space-between;">
-      <label for="highlightLinks" style="margin-bottom: 0;">Highlight Links (Blue)</label>
-      <input type="checkbox" id="highlightLinks" checked>
-    </div>
-  </div>
-
-  <div class="control-group">
-    <div class="input-row" style="justify-content: space-between;">
-      <label for="changeShortsScroll" style="margin-bottom: 0;">Change Shorts Scroll Behavior</label>
-      <input type="checkbox" id="changeShortsScroll">
-    </div>
-  </div>
-
-  <div class="control-group">
-    <div class="input-row" style="justify-content: space-between;">
-      <label for="hideMostRelevant" style="margin-bottom: 0;">Hide Most Relevant Section</label>
-      <input type="checkbox" id="hideMostRelevant">
-    </div>
-  </div>
-
-  <div class="control-group">
-    <div class="input-row" style="justify-content: space-between;">
-      <label for="hideDividers" style="margin-bottom: 0;">Hide Dividers (Horizontal Lines)</label>
-      <input type="checkbox" id="hideDividers">
-    </div>
-  </div>
-
-  <div class="control-group">
-    <div class="input-row" style="justify-content: space-between;">
-      <label for="hideShorts" style="margin-bottom: 0;">Hide Shorts Section</label>
-      <input type="checkbox" id="hideShorts">
-    </div>
-  </div>
-
-  <button id="resetBtn" class="reset">Reset to Defaults</button>
 
   <script src="popup.js"></script>
 </body>

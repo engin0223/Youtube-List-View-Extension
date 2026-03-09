@@ -5,6 +5,8 @@ const defaults = {
     titleFontSize: 13, // pt
     metaFontSize: 10,  // pt
     notifyWidth: 150,   // px
+    cache_max_size: 200, // Max number of descriptions to cache
+    cache_ttl_ms: 60 * 60 * 1000, // 1 hour TTL for cache entries
     highlightLinks: true,
     viewModeHome: 'grid', // New Default
     viewModeSubs: 'list',  // New Default
@@ -31,6 +33,8 @@ const inputs = {
     hideMostRelevant: document.getElementById('hideMostRelevant'),
     hideDividers: document.getElementById('hideDividers'),
     hideShorts: document.getElementById('hideShorts'),
+    cacheMaxSize: document.getElementById('cacheMaxSize'),
+    cacheTTL: document.getElementById('cacheTTL'),
     // New Icons
     iconList: document.getElementById('icon-list'),
     iconGrid: document.getElementById('icon-grid')
@@ -53,6 +57,8 @@ function getCurrentSettings() {
         hideMostRelevant: inputs.hideMostRelevant.checked,
         hideDividers: inputs.hideDividers.checked,
         hideShorts: inputs.hideShorts.checked,
+        cache_max_size: inputs.cacheMaxSize.value,
+        cache_ttl_ms: inputs.cacheTTL.value,
         
         // Pass back the stored modes (Popup doesn't change these, only displays them)
         viewModeHome: storedSettings.viewModeHome,
@@ -164,6 +170,28 @@ function setupControl(textInput, sliderInput) {
     });
 }
 
+// ==========================================================================
+// CLEAR DESCRIPTION CACHE
+// ==========================================================================
+document.getElementById('clearCacheBtn').addEventListener('click', (e) => {
+    // Remove the ytDescCache key from Chrome's local storage
+    chrome.storage.local.remove('ytDescCache', () => {
+        // Provide visual feedback
+        const btn = e.target;
+        const originalText = btn.textContent;
+        btn.textContent = 'Cache Cleared!';
+        btn.style.color = '#3ea6ff';
+        btn.style.borderColor = '#3ea6ff';
+        
+        // Revert button text after 1.5 seconds
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.style.color = '';
+            btn.style.borderColor = '';
+        }, 1500);
+    });
+});
+
 // Initialize Controls
 setupControl(inputs.listContainerWidth, inputs.listContainerWidthSlider);
 setupControl(inputs.thumbnailWidth, inputs.thumbnailWidthSlider);
@@ -178,6 +206,14 @@ const toggleInputNames = ['highlightLinks', 'changeShortsScroll', 'hideMostRelev
 
 // Load saved settings
 document.addEventListener('DOMContentLoaded', () => {
+    const themeToggle = document.getElementById('themeToggle');
+    const body = document.body;
+
+    themeToggle.addEventListener('click', () => {
+        // Toggle the light-theme class on the body
+        body.classList.toggle('light-theme');
+    });
+
     // 1. Determine Context (Are we looking at Subs or Home?)
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
         if (tabs && tabs.length > 0) {
