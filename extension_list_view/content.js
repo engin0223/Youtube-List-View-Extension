@@ -8,6 +8,8 @@ const defaultSettings = {
     titleFontSize: 13, // pt
     metaFontSize: 10,  // pt
     notifyWidth: 150,   // px
+    cache_max_size: 200, // Max number of descriptions to cache
+    cache_ttl_ms: 60 * 60 * 1000, // 1 hour TTL for cache entries
     highlightLinks: true,
     viewModeHome: 'grid', // Default for Home
     viewModeSubs: 'list',  // Default for Subscriptions
@@ -22,6 +24,60 @@ let cachedSettings = { ...defaultSettings };
 
 // State to track view mode status
 let isListViewEnabled = true;
+
+// Cache for video descriptions
+let descriptionCache = {};
+
+
+// Load cache from local storage on startup
+chrome.storage.local.get(['ytDescCache'], (result) => {
+    if (result.ytDescCache) {
+        descriptionCache = result.ytDescCache;
+    }
+});
+
+// Helper to save cache and prioritize the top 50 items currently on the screen
+function saveDescriptionCache() {
+    const keys = Object.keys(descriptionCache);
+    
+    if (keys.length > cachedSettings.cache_max_size) {
+        // 1. Get the URLs of all videos currently in the DOM, in order from top to bottom
+        const items = Array.from(document.querySelectorAll('ytd-rich-item-renderer'));
+        const domUrls = [];
+        
+        items.forEach(item => {
+            const linkEl = item.querySelector('a#video-title-link') || item.querySelector('a.yt-lockup-metadata-view-model__title');
+            if (linkEl) {
+                const urlObj = new URL(linkEl.href);
+                urlObj.searchParams.delete('t'); // Keep matching consistent
+                domUrls.push(urlObj.href);
+            }
+        });
+
+        // 2. Sort the cached keys based on their position in the feed
+        keys.sort((a, b) => {
+            let indexA = domUrls.indexOf(a);
+            let indexB = domUrls.indexOf(b);
+            
+            if (indexA === -1) indexA = Number.MAX_SAFE_INTEGER;
+            if (indexB === -1) indexB = Number.MAX_SAFE_INTEGER;
+            
+            if (indexA === indexB) {
+                return descriptionCache[b].timestamp - descriptionCache[a].timestamp;
+            }
+            return indexA - indexB;
+        });
+        
+        // 3. Delete anything beyond the top CACHE_MAX_SIZE
+        const keysToRemove = keys.slice(cache_max_size);
+        for (const key of keysToRemove) {
+            delete descriptionCache[key];
+        }
+    }
+    chrome.storage.local.set({ ytDescCache: descriptionCache });
+}
+
+
 
 // ==========================================================================
 // LOGIC: APPLY USER SETTINGS (CSS VARIABLES)
@@ -211,11 +267,9 @@ function injectViewToggle() {
     }
 
     // 3. Insert or Move the container
-    if (targetParent) {
-        if (container.parentElement !== targetParent) {
-            targetParent.appendChild(container);
-            updateToggleButtonsUI(); 
-        }
+    if (targetParent && container.parentElement !== targetParent) {
+        targetParent.appendChild(container);
+        updateToggleButtonsUI(); 
     }
 }
 
@@ -310,17 +364,61 @@ function linkify(text) {
     });
 }
 
+function injectDescriptionUI(metadataContainer, fullDescText) {
+    if (!fullDescText || fullDescText === 'null') return;
 
+    const existingWrapper = metadataContainer.querySelector('.custom-description-container');
+    if (existingWrapper) existingWrapper.remove();
+    metadataContainer.querySelectorAll('.custom-description').forEach(el => el.remove());
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'custom-description-container';
+
+    const descDiv = document.createElement('div');
+    descDiv.className = 'custom-description';
+    descDiv.innerHTML = linkify(fullDescText);
+
+    descDiv.addEventListener('click', (e) => {
+        if (e.target.tagName === 'A') {
+            e.stopPropagation();
+        }
+    });
+
+    wrapper.appendChild(descDiv);
+
+    if (fullDescText.length > 150 || fullDescText.includes('\n')) {
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'desc-toggle-btn';
+        toggleBtn.textContent = 'Show More';
+        
+        toggleBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const isExpanded = descDiv.classList.toggle('expanded');
+            toggleBtn.textContent = isExpanded ? 'Show Less' : 'Show More';
+        };
+        wrapper.appendChild(toggleBtn);
+    }
+    metadataContainer.appendChild(wrapper);
+}
+
+
+// ==========================================================================
+// LOGIC: FETCH DESCRIPTIONS (Local Cache Integrated, Throttling Removed)
+// ==========================================================================
 function processVideoDescriptions() {
     if (!isTargetPage()) return;
 
     const items = document.querySelectorAll('ytd-rich-item-renderer');
+    const now = Date.now();
 
     items.forEach(item => {
         const linkEl = item.querySelector('a#video-title-link') || item.querySelector('a.yt-lockup-metadata-view-model__title');
         if (!linkEl) return;
 
-        const currentUrl = linkEl.href;
+        const currentUrlObj = new URL(linkEl.href);
+        currentUrlObj.searchParams.delete('t'); 
+        const currentUrl = currentUrlObj.href;
 
         const metadataContainer = item.querySelector('yt-content-metadata-view-model');
         if (!metadataContainer) return;
@@ -342,14 +440,30 @@ function processVideoDescriptions() {
         // Prevent double-fetching
         if (item.dataset.descFetching === 'true') return;
 
+        // ==========================================
+        // 1. FAST LOCAL CACHE INJECTION
+        // ==========================================
+        const cachedData = descriptionCache[currentUrl];
+        if (cachedData && (now - cachedData.timestamp < cachedSettings.cache_ttl_ms)) {
+            injectDescriptionUI(metadataContainer, cachedData.text);
+            item.dataset.processedUrl = currentUrl;
+            return; // Exit early, do not network request
+        }
+
+        // ==========================================
+        // 2. IMMEDIATE NETWORK FETCH
+        // ==========================================
         item.dataset.descFetching = 'true';
         
         fetch(currentUrl)
-            .then(response => response.text())
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.text();
+            })
             .then(html => {
-                // Double check that the item hasn't been recycled AGAIN while we were fetching
-                const freshLink = item.querySelector('a#video-title-link') || item.querySelector('a.yt-lockup-metadata-view-model__title');
-                if (freshLink && freshLink.href !== currentUrl) {
+                // Double check before injecting
+                const finalLink = item.querySelector('a#video-title-link') || item.querySelector('a.yt-lockup-metadata-view-model__title');
+                if (finalLink && !finalLink.href.includes(currentUrlObj.pathname)) {
                      item.dataset.descFetching = 'false';
                      return;
                 }
@@ -361,9 +475,7 @@ function processVideoDescriptions() {
                 let fullDescText = '';
 
                 if (jsonMatch && jsonMatch[1]) {
-                    try {
-                        fullDescText = JSON.parse('"' + jsonMatch[1] + '"');
-                    } catch (e) {}
+                    try { fullDescText = JSON.parse('"' + jsonMatch[1] + '"'); } catch (e) {}
                 }
                 
                 if (!fullDescText && metaMatch && metaMatch[1]) {
@@ -371,50 +483,13 @@ function processVideoDescriptions() {
                 }
 
                 if (fullDescText && fullDescText !== 'null') {
-                    // Cleanup existing
-                    const existingWrapper = metadataContainer.querySelector('.custom-description-container');
-                    if (existingWrapper) existingWrapper.remove();
-                    metadataContainer.querySelectorAll('.custom-description').forEach(el => el.remove());
+                    injectDescriptionUI(metadataContainer, fullDescText);
 
-                    // Create Wrapper
-                    const wrapper = document.createElement('div');
-                    wrapper.className = 'custom-description-container';
-
-                    // Create Text Div
-                    const descDiv = document.createElement('div');
-                    descDiv.className = 'custom-description';
-
-                    // USE LINKIFY + INNERHTML
-                    descDiv.innerHTML = linkify(fullDescText);
-
-                    // STOP PROPAGATION: Prevent clicking the link from opening the video
-                    descDiv.addEventListener('click', (e) => {
-                        if (e.target.tagName === 'A') {
-                            e.stopPropagation();
-                        }
-                    });
-
-                    wrapper.appendChild(descDiv);
-
-                    // Add "Show More" Button
-                    // We check length > 150 OR if it has newlines
-                    if (fullDescText.length > 150 || fullDescText.includes('\n')) {
-                        const toggleBtn = document.createElement('button');
-                        toggleBtn.className = 'desc-toggle-btn';
-                        toggleBtn.textContent = 'Show More';
-                        
-                        toggleBtn.onclick = (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const isExpanded = descDiv.classList.toggle('expanded');
-                            toggleBtn.textContent = isExpanded ? 'Show Less' : 'Show More';
-                        };
-                        
-                        // Append button to wrapper (CSS handles absolute positioning)
-                        wrapper.appendChild(toggleBtn);
-                    }
-
-                    metadataContainer.appendChild(wrapper);
+                    descriptionCache[currentUrl] = {
+                        text: fullDescText,
+                        timestamp: Date.now()
+                    };
+                    saveDescriptionCache();
                 }
                 item.dataset.processedUrl = currentUrl;
                 item.dataset.descFetching = 'false';
