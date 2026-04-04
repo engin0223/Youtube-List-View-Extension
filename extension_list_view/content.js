@@ -303,7 +303,24 @@ function processSubscriptionsHeader() {
             const metadataModel = item.querySelector('yt-content-metadata-view-model');
 
             if (lockup && metadataModel) {
-                const originalChannelRow = metadataModel.querySelector('.yt-content-metadata-view-model__metadata-row');
+                // Try finding by the known class first
+                let originalChannelRow = metadataModel.querySelector('.ytContentMetadataViewModelMetadataRow');
+
+                // Fallback: If YouTube changed the class name, find the channel link and grab its wrapper
+                if (!originalChannelRow) {
+                    const channelLink = metadataModel.querySelector('a[href^="/@"], a[href^="/channel/"], a[href^="/c/"]');
+                    if (channelLink) {
+                        let curr = channelLink;
+                        // Climb up the DOM until we get the top-level row inside the metadata block
+                        while (curr && curr.parentElement !== metadataModel) {
+                            curr = curr.parentElement;
+                        }
+                        originalChannelRow = curr;
+                    } else if (metadataModel.firstElementChild) {
+                        originalChannelRow = metadataModel.firstElementChild;
+                    }
+                }
+
                 if (originalChannelRow) {
                     const clone = originalChannelRow.cloneNode(true);
                     clone.classList.add('cloned-channel-name');
