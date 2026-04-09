@@ -299,8 +299,8 @@ function processSubscriptionsHeader() {
     items.forEach(item => {
         // 1. CLONE CHANNEL NAME 
         if (!item.querySelector('.cloned-channel-name')) {
-            const lockup = item.querySelector('.yt-lockup-view-model');
-            const metadataModel = item.querySelector('yt-content-metadata-view-model');
+            const lockup = item.querySelector('.yt-lockup-view-model, .ytLockupViewModelWrapper, .ytLockupViewModelHost');
+            const metadataModel = item.querySelector('yt-content-metadata-view-model, .ytContentMetadataViewModelHost');
 
             if (lockup && metadataModel) {
                 // Try finding by the known class first
@@ -330,7 +330,7 @@ function processSubscriptionsHeader() {
         }
 
         // 2. LINK THE AVATAR
-        const avatarContainer = item.querySelector('.yt-lockup-metadata-view-model__avatar');
+        const avatarContainer = item.querySelector('.yt-lockup-metadata-view-model__avatar, .ytLockupMetadataViewModelAvatar');
         const channelLinkEl = item.querySelector('.cloned-channel-name a') || item.querySelector('yt-content-metadata-view-model a');
 
         if (avatarContainer && channelLinkEl && !avatarContainer.querySelector('.custom-avatar-link')) {
@@ -430,7 +430,7 @@ function processVideoDescriptions() {
     const now = Date.now();
 
     items.forEach(item => {
-        const linkEl = item.querySelector('a#video-title-link') || item.querySelector('a.yt-lockup-metadata-view-model__title');
+        const linkEl = item.querySelector('a#video-title-link, a.yt-lockup-metadata-view-model__title, a.ytLockupMetadataViewModelTitle');
         if (!linkEl) return;
 
         const currentUrlObj = new URL(linkEl.href);
@@ -479,7 +479,7 @@ function processVideoDescriptions() {
             })
             .then(html => {
                 // Double check before injecting
-                const finalLink = item.querySelector('a#video-title-link') || item.querySelector('a.yt-lockup-metadata-view-model__title');
+                const finalLink = item.querySelector('a#video-title-link, a.yt-lockup-metadata-view-model__title, a.ytLockupMetadataViewModelTitle');
                 if (finalLink && !finalLink.href.includes(currentUrlObj.pathname)) {
                      item.dataset.descFetching = 'false';
                      return;
