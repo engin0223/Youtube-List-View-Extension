@@ -6,7 +6,7 @@ const defaults = {
     metaFontSize: 10,  // pt
     notifyWidth: 150,   // px
     cache_max_size: 200, // Max number of descriptions to cache
-    cache_ttl_ms: 60 * 60 * 1000, // 1 hour TTL for cache entries
+    cache_ttl_minutes: 60 * 60 * 1000, // 1 hour TTL for cache entries
     highlightLinks: true,
     viewModeHome: 'grid', // New Default
     viewModeSubs: 'list',  // New Default
@@ -60,8 +60,8 @@ function getCurrentSettings() {
         hideDividers: inputs.hideDividers.checked,
         hideShorts: inputs.hideShorts.checked,
         lazyFetchDescriptions: inputs.lazyFetchDescriptions.checked,
-        cache_max_size: inputs.cacheMaxSize.value,
-        cache_ttl_ms: inputs.cacheTTL.value,
+        cache_max_size: Number(inputs.cacheMaxSize.value),
+        cache_ttl_minutes: Number(inputs.cacheTTL.value) * 60 * 1000,
         
         // Pass back the stored modes (Popup doesn't change these, only displays them)
         viewModeHome: storedSettings.viewModeHome,
@@ -202,6 +202,10 @@ setupControl(inputs.titleFontSize, inputs.titleFontSizeSlider);
 setupControl(inputs.metaFontSize, inputs.metaFontSizeSlider);
 setupControl(inputs.notifyWidth, inputs.notifyWidthSlider);
 
+// Cache Settings Listeners
+inputs.cacheMaxSize.addEventListener('change', () => { saveToStorage(); sendToTab(); });
+inputs.cacheTTL.addEventListener('change', () => { saveToStorage(); sendToTab(); });
+
 // Create a set of toggle inputs's names for easier if check in listener
 const toggleInputNames = ['highlightLinks', 'changeShortsScroll', 'hideMostRelevant', 'hideDividers', 'hideShorts', 'lazyFetchDescriptions'];
 
@@ -245,6 +249,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (inputs[key + 'Slider']) inputs[key + 'Slider'].value = items[key];
                 }
             }
+
+            
+            if (inputs.cacheMaxSize) inputs.cacheMaxSize.value = items.cache_max_size;
+            if (inputs.cacheTTL) inputs.cacheTTL.value = items.cache_ttl_minutes / (60 * 1000);
         });
     });
 });
