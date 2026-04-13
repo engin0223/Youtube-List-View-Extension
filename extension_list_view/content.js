@@ -16,7 +16,8 @@ const defaultSettings = {
     changeShortsScroll: false, // Default to changing Shorts scroll behavior
     hideMostRelevant: false, // Default to showing "Most Relevant" section
     hideDividers: false, // Default to showing dividers in list view
-    hideShorts: false // New Setting to hide Shorts section on the homepage
+    hideShorts: false, // New Setting to hide Shorts section on the homepage
+    lazyFetchDescriptions: true // Default to lazy fetching descriptions
 };
 
 // Global cache to handle navigation changes instantly
@@ -423,6 +424,24 @@ function injectDescriptionUI(metadataContainer, fullDescText) {
 // ==========================================================================
 // LOGIC: FETCH DESCRIPTIONS (Local Cache Integrated, Throttling Removed)
 // ==========================================================================
+
+// Global Observer for Lazy Fetching
+const descriptionObserver = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            const item = entry.target;
+            fetchDescriptionForItem(item);
+            // Stop observing once we've triggered the fetch
+            observer.unobserve(item);
+            item.dataset.isObserved = 'false'; 
+        }
+    });
+}, { 
+    root: null, 
+    rootMargin: '800px 0px', // Start fetching 800px before it enters the screen
+    threshold: 0.01 
+});
+
 function processVideoDescriptions() {
     if (!isTargetPage()) return;
 
@@ -440,82 +459,111 @@ function processVideoDescriptions() {
         const metadataContainer = item.querySelector('yt-content-metadata-view-model');
         if (!metadataContainer) return;
 
-        // CHECK: Ensure the URL matches AND the description container wasn't destroyed by an Undo/Re-render
+        // CHECK: Ensure the URL matches AND the description container wasn't destroyed
         const hasDescription = metadataContainer.querySelector('.custom-description-container');
-        if (item.dataset.processedUrl === currentUrl && hasDescription) {
-            return;
-        }
+        if (item.dataset.processedUrl === currentUrl && hasDescription) return;
 
-        // If reusing an item that has an old description, clean it up
+        // CLEANUP: If reusing an item that has an old description
         if (item.dataset.processedUrl && item.dataset.processedUrl !== currentUrl) {
             const oldContainer = item.querySelector('.custom-description-container');
             if (oldContainer) oldContainer.remove();
             item.querySelectorAll('.custom-description').forEach(el => el.remove());
             item.dataset.descFetching = 'false'; 
+            item.dataset.observedUrl = ''; // Reset observer tracking
         }
 
         // Prevent double-fetching
         if (item.dataset.descFetching === 'true') return;
 
-        // ==========================================
-        // 1. FAST LOCAL CACHE INJECTION
-        // ==========================================
+        // 1. FAST LOCAL CACHE INJECTION (Always Synchronous)
         const cachedData = descriptionCache[currentUrl];
         if (cachedData && (now - cachedData.timestamp < cachedSettings.cache_ttl_ms)) {
             injectDescriptionUI(metadataContainer, cachedData.text);
             item.dataset.processedUrl = currentUrl;
-            return; // Exit early, do not network request
+            return; // Exit early, no network request needed
         }
 
-        // ==========================================
-        // 2. IMMEDIATE NETWORK FETCH
-        // ==========================================
-        item.dataset.descFetching = 'true';
-        
-        fetch(currentUrl)
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.text();
-            })
-            .then(html => {
-                // Double check before injecting
-                const finalLink = item.querySelector('a#video-title-link, a.yt-lockup-metadata-view-model__title, a.ytLockupMetadataViewModelTitle');
-                if (finalLink && !finalLink.href.includes(currentUrlObj.pathname)) {
-                     item.dataset.descFetching = 'false';
-                     return;
-                }
-
-                // EXTRACT DESCRIPTION
-                const jsonMatch = html.match(/"description":\{"simpleText":"((?:[^"\\]|\\.)*?)"\}/);
-                const metaMatch = html.match(/<meta name="description" content="([^"]*)"/);
-
-                let fullDescText = '';
-
-                if (jsonMatch && jsonMatch[1]) {
-                    try { fullDescText = JSON.parse('"' + jsonMatch[1] + '"'); } catch (e) {}
-                }
-                
-                if (!fullDescText && metaMatch && metaMatch[1]) {
-                     fullDescText = decodeHtmlEntities(metaMatch[1]);
-                }
-
-                if (fullDescText && fullDescText !== 'null') {
-                    injectDescriptionUI(metadataContainer, fullDescText);
-
-                    descriptionCache[currentUrl] = {
-                        text: fullDescText,
-                        timestamp: Date.now()
-                    };
-                    saveDescriptionCache();
-                }
-                item.dataset.processedUrl = currentUrl;
-                item.dataset.descFetching = 'false';
-            })
-            .catch(err => {
-                // On error, reset so we might try again later
-                item.dataset.descFetching = 'false';
-            });
+        // 2. DECIDE NETWORK FETCH BEHAVIOR (Lazy vs Immediate)
+        if (cachedSettings.lazyFetchDescriptions) {
+            // Only observe if we aren't already observing this exact URL
+            if (item.dataset.observedUrl !== currentUrl) {
+                item.dataset.observedUrl = currentUrl;
+                descriptionObserver.observe(item);
+            }
+        } else {
+            // Fetch immediately
+            fetchDescriptionForItem(item, currentUrl, currentUrlObj, metadataContainer);
+        }
     });
+}
+
+function fetchDescriptionForItem(item, currentUrl, currentUrlObj, metadataContainer) {
+    // If triggered by observer, parameters might be missing, so we re-extract them safely
+    if (!currentUrl) {
+        const linkEl = item.querySelector('a#video-title-link, a.yt-lockup-metadata-view-model__title, a.ytLockupMetadataViewModelTitle');
+        if (!linkEl) return;
+        currentUrlObj = new URL(linkEl.href);
+        currentUrlObj.searchParams.delete('t');
+        currentUrl = currentUrlObj.href;
+        
+        metadataContainer = item.querySelector('yt-content-metadata-view-model');
+        if (!metadataContainer) return;
+
+        // Double check cache in case it was cached while scrolling
+        const cachedData = descriptionCache[currentUrl];
+        if (cachedData && (Date.now() - cachedData.timestamp < cachedSettings.cache_ttl_ms)) {
+            injectDescriptionUI(metadataContainer, cachedData.text);
+            item.dataset.processedUrl = currentUrl;
+            return;
+        }
+    }
+
+    if (item.dataset.descFetching === 'true') return;
+    item.dataset.descFetching = 'true';
+    
+    fetch(currentUrl)
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.text();
+        })
+        .then(html => {
+            // Double check DOM before injecting in case user navigated away quickly
+            const finalLink = item.querySelector('a#video-title-link, a.yt-lockup-metadata-view-model__title, a.ytLockupMetadataViewModelTitle');
+            if (finalLink && !finalLink.href.includes(currentUrlObj.pathname)) {
+                 item.dataset.descFetching = 'false';
+                 return;
+            }
+
+            // EXTRACT DESCRIPTION
+            const jsonMatch = html.match(/"description":\{"simpleText":"((?:[^"\\]|\\.)*?)"\}/);
+            const metaMatch = html.match(/<meta name="description" content="([^"]*)"/);
+
+            let fullDescText = '';
+
+            if (jsonMatch && jsonMatch[1]) {
+                try { fullDescText = JSON.parse('"' + jsonMatch[1] + '"'); } catch (e) {}
+            }
+            
+            if (!fullDescText && metaMatch && metaMatch[1]) {
+                 fullDescText = decodeHtmlEntities(metaMatch[1]);
+            }
+
+            if (fullDescText && fullDescText !== 'null') {
+                injectDescriptionUI(metadataContainer, fullDescText);
+
+                // Save to cache
+                descriptionCache[currentUrl] = {
+                    text: fullDescText,
+                    timestamp: Date.now()
+                };
+                saveDescriptionCache();
+            }
+            item.dataset.processedUrl = currentUrl;
+            item.dataset.descFetching = 'false';
+        })
+        .catch(err => {
+            item.dataset.descFetching = 'false';
+        });
 }
 
 // ==========================================================================

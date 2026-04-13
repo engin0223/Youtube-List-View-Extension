@@ -13,7 +13,8 @@ const defaults = {
     changeShortsScroll: false, // New Setting to control Shorts scroll behavior
     hideMostRelevant: false, // New Setting to hide "Most Relevant" section in search results
     hideDividers: false, // New Setting to hide dividers in list view
-    hideShorts: false // New Setting to hide Shorts section on the homepage
+    hideShorts: false, // New Setting to hide Shorts section on the homepage
+    lazyFetchDescriptions: true // New Setting to control lazy fetching of video descriptions
 };
 
 // Elements
@@ -33,6 +34,7 @@ const inputs = {
     hideMostRelevant: document.getElementById('hideMostRelevant'),
     hideDividers: document.getElementById('hideDividers'),
     hideShorts: document.getElementById('hideShorts'),
+    lazyFetchDescriptions: document.getElementById('lazyFetchDescriptions'),
     cacheMaxSize: document.getElementById('cacheMaxSize'),
     cacheTTL: document.getElementById('cacheTTL'),
     // New Icons
@@ -57,6 +59,7 @@ function getCurrentSettings() {
         hideMostRelevant: inputs.hideMostRelevant.checked,
         hideDividers: inputs.hideDividers.checked,
         hideShorts: inputs.hideShorts.checked,
+        lazyFetchDescriptions: inputs.lazyFetchDescriptions.checked,
         cache_max_size: inputs.cacheMaxSize.value,
         cache_ttl_ms: inputs.cacheTTL.value,
         
@@ -86,7 +89,7 @@ function updateIconState() {
 }
 
 // Create a set of toggle inputs for easier management
-const toggleInputs = [inputs.highlightLinks, inputs.changeShortsScroll, inputs.hideMostRelevant, inputs.hideDividers, inputs.hideShorts];  
+const toggleInputs = [inputs.highlightLinks, inputs.changeShortsScroll, inputs.hideMostRelevant, inputs.hideDividers, inputs.hideShorts, inputs.lazyFetchDescriptions];  
 toggleInputs.forEach((toggle) => {
     if (toggle) {
         toggle.addEventListener('change', () => {
@@ -200,7 +203,7 @@ setupControl(inputs.metaFontSize, inputs.metaFontSizeSlider);
 setupControl(inputs.notifyWidth, inputs.notifyWidthSlider);
 
 // Create a set of toggle inputs's names for easier if check in listener
-const toggleInputNames = ['highlightLinks', 'changeShortsScroll', 'hideMostRelevant', 'hideDividers', 'hideShorts'];
+const toggleInputNames = ['highlightLinks', 'changeShortsScroll', 'hideMostRelevant', 'hideDividers', 'hideShorts', 'lazyFetchDescriptions'];
 
 
 
