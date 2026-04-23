@@ -17,6 +17,15 @@
 
     /* Default Link Color */
     --desc-link-color: #3ea6ff;
+
+    --spec-text-primary: #000;
+}
+
+/* Dark Mode Override */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --spec-text-primary: #fff;
+    }
 }
 
 /* ==========================================================================
@@ -29,9 +38,7 @@
     padding-left: 4px;
     z-index: 2019 !important; /* Ensure it's above standard elements */
 }
-.view-toggle-btn:not(.active) svg {
-    fill: #fff !important;
-}
+
 
 /* --- HOME PAGE SPECIFIC STYLES --- */
 /* This forces the button to float on the right side of the Chips Bar */
@@ -82,7 +89,7 @@
     width: 24px;
     height: 24px;
     /* DYNAMIC COLOR: Ensures visibility in Light & Dark Mode */
-    fill: var(--yt-spec-text-primary) !important; 
+    fill: var(--spec-text-primary) !important; 
 }
 
 /* ==========================================================================
@@ -258,6 +265,10 @@ html.list-view-active ytd-browse[page-subtype="home"] .ytLockupMetadataViewModel
     border-radius: 50% !important;
 }
 
+.cloned-channel-name {
+    display: none !important;
+}
+
 /* Cloned Channel Name Header */
 html.list-view-active ytd-browse[page-subtype="subscriptions"] .cloned-channel-name,
 html.list-view-active ytd-browse[page-subtype="home"] .cloned-channel-name {
@@ -277,7 +288,7 @@ html.list-view-active ytd-browse[page-subtype="subscriptions"] .cloned-channel-n
 html.list-view-active ytd-browse[page-subtype="subscriptions"] .cloned-channel-name span,
 html.list-view-active ytd-browse[page-subtype="home"] .cloned-channel-name a,
 html.list-view-active ytd-browse[page-subtype="home"] .cloned-channel-name span {
-    color: var(--yt-spec-text-primary) !important;
+    color: var(--spec-text-primary) !important;
     font-weight: 500 !important;
     font-size: var(--title-font-size) !important;
     text-shadow: none !important;
@@ -399,13 +410,13 @@ html.list-view-active .desc-toggle-btn {
     bottom: auto !important;
     
     /* PILL STYLE */
-    background-color: var(--yt-spec-badge-chip-background, rgba(255, 255, 255, 0.1));
+    background-color: var(--yt-spec-badge-chip-background, rgba(255, 255, 255, 0.1)) !important;
     border: 1px solid transparent;
     border-radius: 18px; 
     padding: 0 14px;     
     
     /* Text Style */
-    color: var(--yt-spec-text-primary);
+    color: var(--spec-text-primary) !important;
     font-size: 12px;
     font-family: 'Roboto', sans-serif;
     font-weight: 500;
@@ -422,7 +433,7 @@ html.list-view-active .desc-toggle-btn {
 }
 
 html.list-view-active .desc-toggle-btn:hover {
-    background-color: var(--yt-spec-badge-chip-background-hover, rgba(255, 255, 255, 0.2));
+    background-color: var(--yt-spec-badge-chip-background-hover, rgba(255, 255, 255, 0.2)) !important;
 }
 
 /* 7. MISC */

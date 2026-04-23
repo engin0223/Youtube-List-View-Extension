@@ -138,6 +138,9 @@ function disableListView() {
     isListViewEnabled = false;
     document.documentElement.classList.remove('list-view-active');
     updateToggleButtonsUI();
+
+    // Clean up cloned channel names so they don't persist in the DOM during Grid View
+    document.querySelectorAll('.cloned-channel-name').forEach(el => el.remove());
 }
 
 // [NEW] Helper to get the correct storage key based on URL
@@ -326,12 +329,6 @@ function processSubscriptionsHeader() {
                     const clone = originalChannelRow.cloneNode(true);
                     clone.classList.add('cloned-channel-name');
                     lockup.appendChild(clone);
-
-                    // Fix: Color mismatch
-                    clone.style.display = 'block';
-                    lockup.prepend(clone);
-                    const isDarkMode = document.documentElement.hasAttribute('dark');
-                    clone.style.color = isDarkMode ? '#fff' : '#000';
                 }
             }
         }
