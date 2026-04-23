@@ -326,6 +326,12 @@ function processSubscriptionsHeader() {
                     const clone = originalChannelRow.cloneNode(true);
                     clone.classList.add('cloned-channel-name');
                     lockup.appendChild(clone);
+
+                    // Fix: Color mismatch
+                    clone.style.display = 'block';
+                    lockup.prepend(clone);
+                    const isDarkMode = document.documentElement.hasAttribute('dark');
+                    clone.style.color = isDarkMode ? '#fff' : '#000';
                 }
             }
         }
