@@ -29,6 +29,9 @@
     padding-left: 4px;
     z-index: 2019 !important; /* Ensure it's above standard elements */
 }
+.view-toggle-btn:not(.active) svg {
+    fill: #fff !important;
+}
 
 /* --- HOME PAGE SPECIFIC STYLES --- */
 /* This forces the button to float on the right side of the Chips Bar */
